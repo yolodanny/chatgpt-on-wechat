@@ -5,7 +5,7 @@ from config import conf
 
 class QcSummary:
     def __init__(self):
-      openai.api_key  = conf().get("openai_api_key")
+      openai.api_key  = conf().get("open_ai_api_key")
 
       pass
 
