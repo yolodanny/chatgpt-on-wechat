@@ -115,7 +115,7 @@ class QcSummary:
           return None
       
     def check_browser_url(self, url: str):
-        support_list = ["https://www.toutiao.com/"]
+        support_list = ["https://www.toutiao.com", "https://m.toutiao.com"]
 
         for support_url in support_list:
             if url.strip().startswith(support_url):
