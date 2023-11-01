@@ -1,16 +1,37 @@
 import openai
 import requests
 from bs4 import BeautifulSoup
-from config import conf
+# from config import conf
+import asyncio 
+from pyppeteer import launch
 
 class QcSummary:
     def __init__(self):
-      openai.api_key  = conf().get("open_ai_api_key")
+        openai.api_key  = conf().get("open_ai_api_key")
+        pass
 
-      pass
+    async def summary_url_with_browser(self, url: str):
+        browser = await launch()
+        page = await browser.newPage()
+        await page.goto(url)
+        await page.waitForSelector('h1')
+        content = await page.content()
+        await browser.close()
+        return content
+    
+    def run_summary_url_with_browser(self, url):
+        content = asyncio.get_event_loop().run_until_complete(self.summary_url_with_browser(url))
+        soup = BeautifulSoup(content, 'html.parser')
+
+        webpage_text = soup.get_text().replace(" ", "").replace("\t", "").replace("\n", "")
+        print(webpage_text)
+        return webpage_text
 
     def summary_url(self, url: str):
-        webpage_text = self.get_webpage_text(url)
+        if self.check_browser_url(url):
+            webpage_text = self.run_summary_url_with_browser(url)
+        else:
+            webpage_text = self.get_webpage_text(url)
 
         max_chunk_length = 2048  # 根据ChatGPT模型的最大长度来设置
         text_chunks = self.split_text_into_chunks(webpage_text, max_chunk_length)
@@ -62,7 +83,7 @@ class QcSummary:
             1.Y1
             ...
             n.Yn
-            
+
         🏷 标签： #T1...#Tn
         ```{text}```
         """
@@ -87,10 +108,16 @@ class QcSummary:
 
           soup = BeautifulSoup(response.content, 'html.parser')
 
-          # 获取文本内容，可以根据具体网页的HTML结构来定位
-          # 下面的示例假设网页的正文内容在<p>标签中
-          webpage_text = soup.get_text().replace(" ", "").replace("\t", "").replace("\n", "");
+          webpage_text = soup.get_text().replace(" ", "").replace("\t", "").replace("\n", "")
           return webpage_text
       except Exception as e:
           print(f"Error occurred while fetching the webpage: {e}")
           return None
+      
+    def check_browser_url(self, url: str):
+        support_list = ["https://www.toutiao.com/"]
+
+        for support_url in support_list:
+            if url.strip().startswith(support_url):
+                return True
+        return False
