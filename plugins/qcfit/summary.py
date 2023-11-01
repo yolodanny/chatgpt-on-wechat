@@ -1,7 +1,7 @@
 import openai
 import requests
 from bs4 import BeautifulSoup
-# from config import conf
+from config import conf
 import asyncio 
 from pyppeteer import launch
 
