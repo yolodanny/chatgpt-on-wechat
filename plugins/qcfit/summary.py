@@ -20,7 +20,9 @@ class QcSummary:
         return content
     
     def run_summary_url_with_browser(self, url):
-        content = asyncio.get_event_loop().run_until_complete(self.summary_url_with_browser(url))
+        loop = asyncio.new_event_loop()  # 创建一个新的事件循环
+        asyncio.set_event_loop(loop)     # 将其设置为当前线程的事件循环
+        content = loop.run_until_complete(self.summary_url_with_browser(url))
         soup = BeautifulSoup(content, 'html.parser')
 
         webpage_text = soup.get_text().replace(" ", "").replace("\t", "").replace("\n", "")
