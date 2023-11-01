@@ -36,10 +36,10 @@ class Qcfit(Plugin):
             return
 
         if (context.type == ContextType.SHARING):
+            _send_info(e_context, "正在为你加速生成摘要，请稍后")
             res = QcSummary().summary_url(context.content)
             logger.info(res)
             _send_info(e_context, res)
-            
             return
 
     
