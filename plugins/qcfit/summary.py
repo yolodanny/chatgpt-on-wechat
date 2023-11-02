@@ -5,24 +5,36 @@ from config import conf
 import asyncio 
 from pyppeteer import launch
 
+BROWSER = 1
+DIRECT = 2
+
 class QcSummary:
     def __init__(self):
         openai.api_key  = conf().get("open_ai_api_key")
         pass
 
-    async def summary_url_with_browser(self, url: str):
-        browser = await launch()
+    async def summary_url_with_browser(self, url: str, selector: str):
+        browser = await launch(
+           handleSIGINT=False,
+           handleSIGTERM=False,
+           handleSIGHUP=False,
+           dumpio=True,
+           args=['--no-sandbox']
+        )
         page = await browser.newPage()
         await page.goto(url)
-        await page.waitForSelector('h1')
+
+        if selector:
+            await page.waitForSelector(selector)
+
         content = await page.content()
         await browser.close()
         return content
     
-    def run_summary_url_with_browser(self, url):
+    def run_summary_url_with_browser(self, url, selector):
         loop = asyncio.new_event_loop()  # 创建一个新的事件循环
         asyncio.set_event_loop(loop)     # 将其设置为当前线程的事件循环
-        content = loop.run_until_complete(self.summary_url_with_browser(url))
+        content = loop.run_until_complete(self.summary_url_with_browser(url, selector))
         soup = BeautifulSoup(content, 'html.parser')
 
         webpage_text = soup.get_text().replace(" ", "").replace("\t", "").replace("\n", "")
@@ -30,11 +42,14 @@ class QcSummary:
         return webpage_text
 
     def summary_url(self, url: str):
-        if self.check_browser_url(url):
-            webpage_text = self.run_summary_url_with_browser(url)
-        else:
+        check_browser_result = self.check_browser_url(url)
+        print(check_browser_result)
+        if check_browser_result[0] == BROWSER:
+            webpage_text = self.run_summary_url_with_browser(url, check_browser_result[1])
+        elif check_browser_result[0] == BROWSER:
             webpage_text = self.get_webpage_text(url)
-
+        else:
+            return False
         max_chunk_length = 2048  # 根据ChatGPT模型的最大长度来设置
         text_chunks = self.split_text_into_chunks(webpage_text, max_chunk_length)
         simplify_chunks = []
@@ -117,9 +132,15 @@ class QcSummary:
           return None
       
     def check_browser_url(self, url: str):
-        support_list = ["https://www.toutiao.com", "https://m.toutiao.com"]
+        
+        tt_list = ["https://www.toutiao.com", "https://m.toutiao.com"]
+        bd_list = ["https://mbd.baidu.com/"]
 
-        for support_url in support_list:
+        for support_url in tt_list:
             if url.strip().startswith(support_url):
-                return True
-        return False
+                return [BROWSER, 'h1']
+        for support_url in bd_list:
+            if url.strip().startswith(support_url):
+                return [BROWSER, '']
+            
+        return [DIRECT, '']
