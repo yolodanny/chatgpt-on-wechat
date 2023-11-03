@@ -5,8 +5,10 @@ from config import conf
 import asyncio 
 from pyppeteer import launch
 
+NOT_SUPPORT = 0
 BROWSER = 1
 DIRECT = 2
+
 
 class QcSummary:
     def __init__(self):
@@ -43,31 +45,32 @@ class QcSummary:
 
     def summary_url(self, url: str):
         check_browser_result = self.check_browser_url(url)
-        print(check_browser_result)
         if check_browser_result[0] == BROWSER:
             webpage_text = self.run_summary_url_with_browser(url, check_browser_result[1])
-        elif check_browser_result[0] == BROWSER:
+        elif check_browser_result[0] == DIRECT:
             webpage_text = self.get_webpage_text(url)
         else:
-            return False
-        max_chunk_length = 2048  # 根据ChatGPT模型的最大长度来设置
-        text_chunks = self.split_text_into_chunks(webpage_text, max_chunk_length)
-        simplify_chunks = []
-
-        if len(text_chunks) == 1:
-            print("====== 开始总结 ======")
-            final_summary = self.summary_content(text_chunks[0].replace("\n", ""))
-        else:
-            for chunk in text_chunks:
-                print("start simplify 1 chunk")
-                simplify_chunks.append(self.simplify_content(chunk.replace("\n", "")))
+            return "哎呀，我好像无法打开这篇文章，请换一篇文章试试吧~"
         
-            print("====== 开始总结 ======")
-            final_summary = self.summary_content(" ".join(simplify_chunks))
+        try:
+            max_chunk_length = 2048  # 根据ChatGPT模型的最大长度来设置
+            text_chunks = self.split_text_into_chunks(webpage_text, max_chunk_length)
+            simplify_chunks = []
 
-        print("总结完成")
-        print(final_summary)
-        return final_summary   
+            if len(text_chunks) == 1:
+                print("====== 开始总结 ======")
+                final_summary = self.summary_content(text_chunks[0].replace("\n", ""))
+            else:
+                print("===== 开始分段处理 =====")
+                for chunk in text_chunks:
+                    simplify_chunks.append(self.simplify_content(chunk.replace("\n", "")))
+            
+                print("====== 开始总结 ======")
+                final_summary = self.summary_content(" ".join(simplify_chunks))
+        except:
+            return "未知错误，请重试"
+        else:
+            return final_summary   
 
     def get_completion(self, prompt, model="gpt-3.5-turbo"):
         messages = [{"role": "user", "content": prompt}]
@@ -132,9 +135,13 @@ class QcSummary:
           return None
       
     def check_browser_url(self, url: str):
-        
+        black_list = ["https://me.mbd.baidu.com"]
         tt_list = ["https://www.toutiao.com", "https://m.toutiao.com"]
         bd_list = ["https://mbd.baidu.com/"]
+
+        for support_url in black_list:
+            if url.strip().startswith(support_url):
+                return [NOT_SUPPORT, '']
 
         for support_url in tt_list:
             if url.strip().startswith(support_url):
