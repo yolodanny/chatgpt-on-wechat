@@ -12,7 +12,7 @@ DIRECT = 2
 
 class QcSummary:
     def __init__(self):
-        openai.api_key  = conf().get("open_ai_api_key")
+        openai.api_key  = conf().get("origin_open_ai_api_key")
         pass
 
     async def summary_url_with_browser(self, url: str, selector: str):

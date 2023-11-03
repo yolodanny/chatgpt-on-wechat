@@ -27,12 +27,7 @@ class Qcfit(Plugin):
         context = e_context['context']
         if context.type not in [
             ContextType.SHARING,
-            ContextType.TEXT,
         ]:
-            return
-        
-        if (context.type == ContextType.TEXT):
-            _send_info(e_context, "我已经收到你的信息喽")
             return
 
         if (context.type == ContextType.SHARING):
