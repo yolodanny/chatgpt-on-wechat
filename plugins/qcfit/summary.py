@@ -9,10 +9,11 @@ NOT_SUPPORT = 0
 BROWSER = 1
 DIRECT = 2
 
-
 class QcSummary:
     def __init__(self):
-        openai.api_key  = conf().get("origin_open_ai_api_key")
+        openai.api_key = conf().get("open_ai_api_key")
+        if conf().get("open_ai_api_base"):
+            openai.api_base = conf().get("open_ai_api_base")
         pass
 
     async def summary_url_with_browser(self, url: str, selector: str):
